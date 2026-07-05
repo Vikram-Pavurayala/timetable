@@ -2,7 +2,7 @@
   "name": "MTech CSE Weekly Board — Fall 2026-2027",
   "short_name": "Weekly Board",
   "description": "Day-wise Theory and Lab class schedule for MTech CSE, VIT Chennai.",
-  "start_url": "./index.html",
+  "start_url": "./timetable.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
