@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MTech CSE — Weekly Board</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#111823">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Weekly Board">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#111823;
+    --panel:#182333;
+    --panel-2:#1e2c40;
+    --line: #2b3a4f;
+    --text:#EAF0F6;
+    --muted:#8CA0B4;
+    --amber:#F2A93B;
+    --amber-dim: #4a3a1f;
+    --mint:#49C9BE;
+    --mint-dim: #1c3d3a;
+    --free: #445267;
+    --lunch:#3a3020;
+    --radius: 10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, rgba(242,169,59,0.06), transparent 40%),
+      radial-gradient(circle at 85% 100%, rgba(73,201,190,0.06), transparent 40%),
+      var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+  .mono{font-family:'JetBrains Mono', monospace;}
+
+  header.top{
+    padding:16px 16px 24px;
+    text-align:center;
+    border-bottom:1px solid var(--line);
+    background: linear-gradient(180deg, rgba(24,35,51,0.6), transparent);
+  }
+  .header-controls{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    max-width:900px;
+    margin:0 auto 20px;
+  }
+  .header-controls .spacer{ flex:1; }
+  @media (max-width:420px){
+    .ai-notice-btn, .edit-btn{ font-size:10px; padding:6px 9px; }
+    .header-controls{ gap:6px; }
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    letter-spacing:0.25em;
+    font-size:11px;
+    color:var(--amber);
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  h1{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:800;
+    font-size:clamp(26px, 5vw, 42px);
+    margin:0 0 8px;
+    letter-spacing:0.01em;
+  }
+  .sub{
+    color:var(--muted);
+    font-size:14px;
+    max-width:520px;
+    margin:0 auto;
+  }
+
+  /* Day selector — split flap style tabs */
+  .dayboard{
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:8px;
+    max-width:900px;
+    margin:28px auto 0;
+    padding:0 16px;
+  }
+  .flap{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:0.08em;
+    color:var(--muted);
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:10px 16px;
+    cursor:pointer;
+    transition: all .15s ease;
+    position:relative;
+    text-transform:uppercase;
+  }
+  .flap:hover{ color:var(--text); border-color:#3a4d68; }
+  .flap.active{
+    color:#12181f;
+    background:var(--amber);
+    border-color:var(--amber);
+    box-shadow: 0 0 0 3px rgba(242,169,59,0.15);
+  }
+  .flap .full{ display:none; }
+
+  main{
+    max-width:900px;
+    margin:0 auto;
+    padding:32px 16px 0;
+  }
+
+  .day-heading{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:18px;
+    padding-bottom:14px;
+    border-bottom:2px solid var(--line);
+  }
+  .day-heading h2{
+    font-family:'JetBrains Mono', monospace;
+    font-size:28px;
+    margin:0;
+    letter-spacing:0.02em;
+  }
+  .day-heading .count{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  .period-row{
+    display:grid;
+    grid-template-columns:96px 1fr;
+    gap:16px;
+    margin-bottom:10px;
+  }
+  .time-col{
+    font-family:'JetBrains Mono', monospace;
+    padding-top:10px;
+    text-align:right;
+  }
+  .period-no{
+    color:var(--muted);
+    font-size:10px;
+    letter-spacing:0.15em;
+    margin-bottom:4px;
+  }
+  .time-badge{
+    font-size:13px;
+    font-weight:700;
+    color:var(--text);
+    background:var(--panel-2);
+    border-radius:6px;
+    padding:6px 8px;
+    display:inline-block;
+    min-width:70px;
+  }
+
+  .slot-pair{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+  }
+  @media (max-width:640px){
+    .slot-pair{ grid-template-columns:1fr; }
+    .period-row{ grid-template-columns:70px 1fr; }
+  }
+
+  .card{
+    border-radius:var(--radius);
+    padding:12px 14px;
+    border:1px solid var(--line);
+    background:var(--panel);
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{
+    content:'';
+    position:absolute; left:0; top:0; bottom:0; width:4px;
+  }
+  .card.theory::before{ background:var(--amber); }
+  .card.lab::before{ background:var(--mint); }
+  .card.free::before{ background:var(--free); }
+
+  .tag{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    margin-bottom:6px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .tag.theory{ color:var(--amber); }
+  .tag.lab{ color:var(--mint); }
+  .tag.free{ color:var(--free); }
+  .dot{ width:6px; height:6px; border-radius:50%; display:inline-block; }
+  .dot.theory{ background:var(--amber); }
+  .dot.lab{ background:var(--mint); }
+  .dot.free{ background:var(--free); }
+
+  .course{
+    font-weight:600;
+    font-size:14.5px;
+    line-height:1.35;
+    margin-bottom:3px;
+  }
+  .meta{
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.5;
+  }
+  .meta b{ color:#C7D3DF; font-weight:500; }
+  .free-label{
+    font-size:13px;
+    color:var(--free);
+    font-style:italic;
+    padding:4px 0;
+  }
+
+  .lunch-row{
+    text-align:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.3em;
+    color:var(--amber);
+    background:var(--lunch);
+    border:1px dashed #5a4826;
+    border-radius:8px;
+    padding:8px;
+    margin: 14px 0 14px 112px;
+  }
+  @media (max-width:640px){
+    .lunch-row{ margin-left:86px; }
+  }
+
+  /* Track toggle (Theory / Lab) */
+  .trackboard{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    margin-top:18px;
+  }
+  .track-btn{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    padding:9px 22px;
+    border-radius:20px;
+    border:1px solid var(--line);
+    background:transparent;
+    color:var(--muted);
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .track-btn.theory-active{
+    background:var(--amber-dim);
+    border-color:var(--amber);
+    color:var(--amber);
+  }
+  .track-btn.lab-active{
+    background:var(--mint-dim);
+    border-color:var(--mint);
+    color:var(--mint);
+  }
+
+  .single-row{
+    display:grid;
+    grid-template-columns:96px 1fr;
+    gap:16px;
+    margin-bottom:10px;
+  }
+  @media (max-width:640px){
+    .single-row{ grid-template-columns:70px 1fr; }
+  }
+  .unmapped-code{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--free);
+    margin-top:2px;
+  }
+
+  .edit-btn{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:12px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:8px 14px;
+    cursor:pointer;
+    transition: all .15s ease;
+    white-space:nowrap;
+  }
+  .edit-btn:hover{ color:var(--text); border-color:#3a4d68; }
+  .edit-btn.on{
+    color:#12181f;
+    background:var(--amber);
+    border-color:var(--amber);
+  }
+
+  .edit-select{
+    width:100%;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13.5px;
+    color:var(--text);
+    background:var(--panel-2);
+    border:1.5px dashed var(--amber);
+    border-radius:var(--radius);
+    padding:12px 12px;
+    cursor:pointer;
+    appearance:none;
+    -webkit-appearance:none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238CA0B4' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat:no-repeat;
+    background-position: right 12px center;
+    padding-right:32px;
+  }
+  .edit-select:focus{ outline:none; border-color:var(--mint); }
+
+  .ai-notice-btn{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:11px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--muted);
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:7px 12px 7px 9px;
+    cursor:pointer;
+    transition: all .15s ease;
+    white-space:nowrap;
+  }
+  .ai-notice-btn:hover{ color:var(--text); border-color:#3a4d68; }
+  .ai-notice-btn .badge{
+    width:16px; height:16px;
+    border-radius:50%;
+    background:var(--mint);
+    color:#0c1a19;
+    display:flex; align-items:center; justify-content:center;
+    font-size:9px;
+    font-weight:800;
+  }
+
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(8,12,18,0.7);
+    backdrop-filter: blur(2px);
+    z-index:100;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal-box{
+    max-width:420px;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:26px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5);
+  }
+  .modal-box h3{
+    font-family:'JetBrains Mono', monospace;
+    font-size:15px;
+    margin:0 0 12px;
+    color:var(--mint);
+    display:flex; align-items:center; gap:8px;
+  }
+  .modal-box p{
+    font-size:13.5px;
+    line-height:1.6;
+    color:var(--text);
+    margin:0 0 18px;
+  }
+  .modal-close{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:700;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:#12181f;
+    background:var(--mint);
+    border:none;
+    border-radius:6px;
+    padding:9px 18px;
+    cursor:pointer;
+  }
+
+  footer{
+    text-align:center;
+    color:var(--free);
+    font-size:11px;
+    font-family:'JetBrains Mono', monospace;
+    margin-top:40px;
+    letter-spacing:0.05em;
+  }
+</style>
+</head>
+<body>
+
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box">
+    <h3><span class="badge" style="background:var(--amber);color:#12181f;">✎</span> Heads up</h3>
+    <p>Edits you make here are saved locally in this browser, on this device. They'll stick around the next time you open this same file — but they'll be cleared if you clear your browser's cache or site data, switch to a different browser or device, or open a fresh copy of this file.</p>
+    <button class="modal-close" id="editModalClose" style="background:var(--amber);">Got it</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="aiModal">
+  <div class="modal-box">
+    <h3><span class="badge" style="background:var(--mint);color:#0c1a19;">AI</span> About this page</h3>
+    <p>This webpage — including its layout, code, and the way class data has been organized — was generated with AI assistance. The underlying timetable and course details were sourced from the official records, but AI-generated content can contain mistakes, so please double-check anything important against your official VTOP timetable.</p>
+    <button class="modal-close" id="aiModalClose">Got it</button>
+  </div>
+</div>
+
+<header class="top">
+  <div class="header-controls">
+    <button class="ai-notice-btn" id="aiNoticeBtn"><span class="badge">AI</span> Notice</button>
+    <button class="edit-btn" id="installBtn" style="display:none;">⤓ Install</button>
+    <button class="edit-btn" id="editToggle">✎ Edit</button>
+  </div>
+  <div class="eyebrow">MTech · CSE · VIT Chennai</div>
+  <div class="eyebrow" style="color:var(--mint); margin-bottom:14px;">Fall Semester 2026–2027</div>
+  <h1>WEEKLY&nbsp;BOARD</h1>
+  <div class="sub">Pick a day to see the full run — lecture, lab, and every open slot in between.</div>
+</header>
+
+<div class="dayboard" id="dayboard"></div>
+
+<div class="trackboard" id="trackboard">
+  <button class="track-btn" id="btnTheory" data-track="theory">Theory</button>
+  <button class="track-btn" id="btnLab" data-track="lab">Lab</button>
+</div>
+
+<main>
+  <div class="day-heading">
+    <h2 id="dayTitle">—</h2>
+    <div class="count" id="dayCount"></div>
+  </div>
+  <div id="scheduleBody"></div>
+</main>
+
+<script>
+/* ---------- Course lookup (from registered course list) ---------- */
+const COURSES = {
+  A:  { course:"MACSE517 · Computer Architecture and Organization", faculty:"Christopher Columbus C", venue:"MAB4-302" },
+  B:  { course:"MACSE501 · Data Structures and Algorithm Analysis", faculty:"Vijayalakshmi A", venue:"MAB4-302" },
+  C:  { course:"MACSE519 · Machine Learning and Applications", faculty:"Jegannathan L", venue:"MAB4-302" },
+  D:  { course:"MACSE512 · Operating Systems", faculty:"Kumar R", venue:"MAB4-302" },
+  E:  { course:"MACSE518 · Database Modeling and Design", faculty:"R Jothi", venue:"MAB4-302" },
+  G:  { course:"MASTS601 · Competitive Coding I", faculty:"Ethnus (APT)", venue:"MAB4-302" },
+  TF: { course:"MAENG501 · Technical Report Writing", faculty:"Samik Malla", venue:"MAB4-302" },
+};
+
+const LAB_COURSES_UNIQUE = {
+  DB:  { course:"MACSE518 · Database Modeling and Design (Lab)", faculty:"R Jothi", venue:"AB3-310" },
+  DSA: { course:"MACSE501 · Data Structures and Algorithm Analysis (Lab)", faculty:"Vijayalakshmi A", venue:"AB3-512" },
+  TRW: { course:"MAENG501 · Technical Report Writing (Lab)", faculty:"Samik Malla", venue:"MAB4-302" },
+  ML:  { course:"MACSE519 · Machine Learning and Applications (Lab)", faculty:"Jegannathan L", venue:"AB3-512" },
+  CA:  { course:"MACSE517 · Computer Architecture and Organization (Lab)", faculty:"Christopher Columbus C", venue:"AB1-210" },
+  OS:  { course:"MACSE512 · Operating Systems (Lab)", faculty:"Kumar R", venue:"AB3-612" },
+};
+
+const LAB_COURSES = {
+  L31: LAB_COURSES_UNIQUE.DB,  L32: LAB_COURSES_UNIQUE.DB,
+  L43: LAB_COURSES_UNIQUE.DSA, L44: LAB_COURSES_UNIQUE.DSA,
+  L11: LAB_COURSES_UNIQUE.TRW, L12: LAB_COURSES_UNIQUE.TRW,
+  L23: LAB_COURSES_UNIQUE.ML,  L24: LAB_COURSES_UNIQUE.ML,
+  L49: LAB_COURSES_UNIQUE.CA,  L50: LAB_COURSES_UNIQUE.CA,
+  L29: LAB_COURSES_UNIQUE.OS,  L30: LAB_COURSES_UNIQUE.OS,
+  L55: LAB_COURSES_UNIQUE.TRW, L56: LAB_COURSES_UNIQUE.TRW,
+};
+
+/* ---------- Time slots ---------- */
+const THEORY_TIMES = ["08:00–08:50","08:55–09:45","09:50–10:40","10:45–11:35","11:40–12:30","12:35–13:25",
+                      "14:00–14:50","14:55–15:45","15:50–16:40","16:45–17:35","17:40–18:30","18:35–19:25"];
+const LAB_TIMES    = ["08:00–08:50","08:50–09:40","09:50–10:40","10:40–11:30","11:40–12:30","12:30–13:20",
+                      "14:00–14:50","14:50–15:40","15:50–16:40","16:40–17:30","17:40–18:30","18:30–19:20"];
+
+/* ---------- Weekly grid (raw codes exactly as on the timetable) ---------- */
+const WEEK = {
+  MON:{ theory:["A1","F1","D1","TB1","TG1","S11","A2","F2","D2","TB2","TG2","S3"],
+        lab:   ["L1","L2","L3","L4","L5","L6","L31","L32","L33","L34","L35","L36"] },
+  TUE:{ theory:["B1","G1","E1","TC1","TAA1","-","B2","G2","E2","TC2","TAA2","S1"],
+        lab:   ["L7","L8","L9","L10","L11","L12","L37","L38","L39","L40","L41","L42"] },
+  WED:{ theory:["C1","A1","F1","TD1","TBB1","-","C2","A2","F2","TD2","TBB2","S4"],
+        lab:   ["L13","L14","L15","L16","L17","L18","L43","L44","L45","L46","L47","L48"] },
+  THU:{ theory:["D1","B1","G1","TE1","TCC1","-","D2","B2","G2","TE2","TCC2","S2"],
+        lab:   ["L19","L20","L21","L22","L23","L24","L49","L50","L51","L52","L53","L54"] },
+  FRI:{ theory:["E1","C1","TA1","TF1","TDD1","S15","E2","C2","TA2","TF2","TDD2","-"],
+        lab:   ["L25","L26","L27","L28","L29","L30","L55","L56","L57","L58","L59","L60"] },
+  SAT:{ theory:["X11","X12","Y11","Y12","S8","S8","X21","Z21","Y21","W21","W22","Z22"],
+        lab:   ["L71","L72","L73","L74","L75","L76","L77","L78","L79","L80","L81","L82"] },
+  SUN:{ theory:["Y11","Y12","X11","X12","S10","S10","Y21","Z21","X21","W21","W22","Z22"],
+        lab:   ["L83","L84","L85","L86","L87","L88","L89","L90","L91","L92","L93","L94"] },
+};
+
+const DAY_LABELS = { MON:"Monday", TUE:"Tuesday", WED:"Wednesday", THU:"Thursday", FRI:"Friday", SAT:"Saturday", SUN:"Sunday" };
+
+/* ---------- Theory slot lookup ----------
+   Each registered course is tied to SPECIFIC slot codes only (as listed on
+   the course registration page, e.g. "B1+TB1"). Afternoon codes like A2,
+   B2, TA2 etc. are NOT part of any registered course's slot combo, so they
+   must resolve to "no class" rather than being guessed from the letter. */
+const THEORY_SLOTS = {
+  A1: COURSES.A,  TA1: COURSES.A,
+  B1: COURSES.B,  TB1: COURSES.B,
+  C1: COURSES.C,  TC1: COURSES.C,
+  D1: COURSES.D,  TD1: COURSES.D,
+  E1: COURSES.E,  TE1: COURSES.E,
+  G1: COURSES.G,  TG1: COURSES.G,
+  TF1: COURSES.TF,
+};
+
+function resolveTheory(code){
+  if(!code || code === "-") return null;
+  return THEORY_SLOTS[code] || null;
+}
+function resolveLab(code){
+  if(!code || code === "-") return null;
+  if(LAB_COURSES[code]) return LAB_COURSES[code];
+  return null;
+}
+
+/* ---------- State ---------- */
+let currentDay = "MON";
+let currentTrack = "theory";
+let editMode = false;
+// user overrides: OVERRIDES[day][track][periodIndex] = "FREE" | "COURSE:<key>" | "LAB:<key>"
+const OVERRIDES = {};
+function ensureOverrideBucket(day, track){
+  if(!OVERRIDES[day]) OVERRIDES[day] = { theory:{}, lab:{} };
+  if(!OVERRIDES[day][track]) OVERRIDES[day][track] = {};
+}
+
+/* Resolve the value currently in effect for a slot: override first, else original code */
+function currentValue(day, track, i){
+  ensureOverrideBucket(day, track);
+  const ov = OVERRIDES[day][track][i];
+  if(ov) return ov;
+  const code = WEEK[day][track][i];
+  const detail = track === 'theory' ? resolveTheory(code) : resolveLab(code);
+  if(!detail) return null; // falls back to raw-code display, not yet edited
+  if(track === 'theory'){
+    const key = Object.keys(COURSES).find(k => COURSES[k] === detail);
+    return 'COURSE:' + key;
+  } else {
+    const key = Object.keys(LAB_COURSES_UNIQUE).find(k => LAB_COURSES_UNIQUE[k] === detail);
+    return 'LAB:' + key;
+  }
+}
+
+function detailForValue(track, value){
+  if(!value || value === 'FREE') return null;
+  if(value.startsWith('COURSE:')) return COURSES[value.slice(7)];
+  if(value.startsWith('LAB:')) return LAB_COURSES_UNIQUE[value.slice(4)];
+  return null;
+}
+
+function updateOverride(day, track, i, value){
+  ensureOverrideBucket(day, track);
+  OVERRIDES[day][track][i] = value;
+  saveOverrides();
+  render();
+}
+
+function buildSelectOptions(track, selected){
+  let opts = `<option value="FREE" ${selected==='FREE'||!selected?'selected':''}>— No class —</option>`;
+  if(track === 'theory'){
+    Object.keys(COURSES).forEach(k=>{
+      const val = 'COURSE:' + k;
+      opts += `<option value="${val}" ${selected===val?'selected':''}>${COURSES[k].course}</option>`;
+    });
+  } else {
+    Object.keys(LAB_COURSES_UNIQUE).forEach(k=>{
+      const val = 'LAB:' + k;
+      opts += `<option value="${val}" ${selected===val?'selected':''}>${LAB_COURSES_UNIQUE[k].course}</option>`;
+    });
+  }
+  return opts;
+}
+
+/* ---------- Day tabs ---------- */
+const dayboard = document.getElementById('dayboard');
+const order = ["MON","TUE","WED","THU","FRI","SAT","SUN"];
+order.forEach(d=>{
+  const btn = document.createElement('div');
+  btn.className = 'flap';
+  btn.textContent = d;
+  btn.dataset.day = d;
+  btn.addEventListener('click', ()=>{ currentDay = d; render(); });
+  dayboard.appendChild(btn);
+});
+
+/* ---------- PWA: install prompt + service worker ---------- */
+let deferredInstallPrompt = null;
+const installBtn = document.getElementById('installBtn');
+
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  installBtn.style.display = 'inline-flex';
+});
+
+installBtn.addEventListener('click', async ()=>{
+  if(!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  installBtn.style.display = 'none';
+});
+
+window.addEventListener('appinstalled', ()=>{
+  installBtn.style.display = 'none';
+});
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{ /* fine if unavailable, e.g. opened via file:// */ });
+  });
+}
+
+/* ---------- AI notice modal ---------- */
+const aiModal = document.getElementById('aiModal');
+document.getElementById('aiNoticeBtn').addEventListener('click', ()=> aiModal.classList.add('show'));
+document.getElementById('aiModalClose').addEventListener('click', ()=> aiModal.classList.remove('show'));
+aiModal.addEventListener('click', (e)=>{ if(e.target === aiModal) aiModal.classList.remove('show'); });
+
+/* ---------- Local saving ----------
+   Persists user edits (OVERRIDES) to localStorage so they survive a reload.
+   Falls back to in-memory-only if storage is unavailable (e.g. inside a
+   sandboxed preview) — the page still works, edits just won't persist. */
+const STORAGE_KEY = 'mtechTimetableOverrides_v1';
+let storageAvailable = true;
+
+function loadOverrides(){
+  try{
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      Object.assign(OVERRIDES, parsed);
+    }
+  }catch(e){
+    storageAvailable = false;
+  }
+}
+function saveOverrides(){
+  if(!storageAvailable) return;
+  try{
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(OVERRIDES));
+  }catch(e){
+    storageAvailable = false;
+  }
+}
+document.getElementById('btnTheory').addEventListener('click', ()=>{ currentTrack = 'theory'; render(); });
+document.getElementById('btnLab').addEventListener('click', ()=>{ currentTrack = 'lab'; render(); });
+
+/* ---------- Edit toggle ---------- */
+const editBtn = document.getElementById('editToggle');
+const editModal = document.getElementById('editModal');
+document.getElementById('editModalClose').addEventListener('click', ()=> editModal.classList.remove('show'));
+editModal.addEventListener('click', (e)=>{ if(e.target === editModal) editModal.classList.remove('show'); });
+
+editBtn.addEventListener('click', ()=>{
+  editMode = !editMode;
+  editBtn.textContent = editMode ? '✓ Done' : '✎ Edit';
+  editBtn.classList.toggle('on', editMode);
+  if(editMode) editModal.classList.add('show');
+  render();
+});
+
+function countScheduled(day, track){
+  let n=0;
+  for(let i=0;i<12;i++){
+    const val = currentValue(day, track, i);
+    if(val && val !== 'FREE') n++;
+  }
+  return n;
+}
+
+function cardHTML(track, detail, rawCode){
+  const label = track === 'theory' ? 'Theory' : 'Lab';
+  if(detail){
+    return `<div class="card ${track}">
+      <div class="tag ${track}"><span class="dot ${track}"></span>${label}</div>
+      <div class="course">${detail.course}</div>
+      <div class="meta"><b>${detail.faculty}</b> · ${detail.venue}</div>
+    </div>`;
+  }
+  const codeNote = (rawCode && rawCode !== "-") ? `<div class="unmapped-code">code: ${rawCode}</div>` : "";
+  return `<div class="card free">
+    <div class="tag free"><span class="dot free"></span>${label}</div>
+    <div class="free-label">No class assigned</div>
+    ${codeNote}
+  </div>`;
+}
+
+function editSelectHTML(day, track, i){
+  const val = currentValue(day, track, i);
+  return `<select class="edit-select" data-day="${day}" data-track="${track}" data-i="${i}">
+    ${buildSelectOptions(track, val)}
+  </select>`;
+}
+
+function render(){
+  document.querySelectorAll('.flap').forEach(f=> f.classList.toggle('active', f.dataset.day === currentDay));
+  document.getElementById('btnTheory').className = 'track-btn' + (currentTrack==='theory' ? ' theory-active' : '');
+  document.getElementById('btnLab').className = 'track-btn' + (currentTrack==='lab' ? ' lab-active' : '');
+
+  document.getElementById('dayTitle').textContent = DAY_LABELS[currentDay] + " — " + (currentTrack === 'theory' ? 'Theory' : 'Lab');
+  document.getElementById('dayCount').textContent = countScheduled(currentDay, currentTrack) + " scheduled sessions";
+
+  const body = document.getElementById('scheduleBody');
+  body.innerHTML = "";
+
+  const times = currentTrack === 'theory' ? THEORY_TIMES : LAB_TIMES;
+  const codes = WEEK[currentDay][currentTrack];
+  const lunchStart = currentTrack === 'theory' ? "13:25" : "13:20";
+
+  for(let i=0;i<12;i++){
+    const row = document.createElement('div');
+    row.className = 'single-row';
+
+    const timeCol = document.createElement('div');
+    timeCol.className = 'time-col';
+    timeCol.innerHTML = `<div class="period-no">P${i+1}</div>
+      <div class="time-badge mono">${times[i]}</div>`;
+    row.appendChild(timeCol);
+
+    const slotWrap = document.createElement('div');
+    if(editMode){
+      slotWrap.innerHTML = editSelectHTML(currentDay, currentTrack, i);
+    } else {
+      const val = currentValue(currentDay, currentTrack, i);
+      const detail = detailForValue(currentTrack, val);
+      slotWrap.innerHTML = cardHTML(currentTrack, detail, codes[i]);
+    }
+    row.appendChild(slotWrap);
+
+    body.appendChild(row);
+
+    if(i === 5){
+      const lunch = document.createElement('div');
+      lunch.className = 'lunch-row';
+      lunch.textContent = `— LUNCH · ${lunchStart}–14:00 —`;
+      body.appendChild(lunch);
+    }
+  }
+
+  if(editMode){
+    body.querySelectorAll('.edit-select').forEach(sel=>{
+      sel.addEventListener('change', (e)=>{
+        updateOverride(e.target.dataset.day, e.target.dataset.track, parseInt(e.target.dataset.i,10), e.target.value);
+      });
+    });
+  }
+}
+
+loadOverrides();
+render();
+</script>
+
+</body>
+</html>
