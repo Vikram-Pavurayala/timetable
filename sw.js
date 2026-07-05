@@ -1,6 +1,6 @@
 const CACHE_NAME = 'weekly-board-v1';
 const CORE_ASSETS = [
-  './timetable.html',
+  './index.html',
   './manifest.json',
   './icon-192.png',
   './icon-512.png'
